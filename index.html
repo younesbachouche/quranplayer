@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quran Player By Younes</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+      integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w=="
+      crossorigin="anonymous"
+    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./assets/css/main.css" />
+  </head>
+  <body>
+    <div class="player">
+      <!-- Dashboard -->
+      <div class="dashboard">
+        <!-- Header -->
+        <header>
+          <h4>أبو بكر الشاطري</h4>
+          <h2>ThanhCongChamomile</h2>
+        </header>
+
+        <!-- CD -->
+        <div class="cd">
+          <div class="cd-thumb" style="background-image: url('https://i.ytimg.com/vi/jTLhQf5KJSc/maxresdefault.jpg');"></div>
+        </div>
+
+        <!-- Control -->
+        <div class="control">
+          <div class="btn btn-repeat">
+            <i class="fas fa-redo"></i>
+          </div>
+          <div class="btn btn-prev">
+            <i class="fas fa-step-backward"></i>
+          </div>
+          <div class="btn btn-toggle-play">
+            <i class="fas fa-pause icon-pause"></i>
+            <i class="fas fa-play icon-play"></i>
+          </div>
+          <div class="btn btn-next">
+            <i class="fas fa-step-forward"></i>
+          </div>
+          <div class="btn btn-random">
+            <i class="fas fa-random"></i>
+          </div>
+        </div>
+
+        <input id="progress" class="progress" type="range" step="1" value="0" min="0" max="100" />
+
+        <audio id="audio" src=""></audio>
+      </div>
+
+      <!-- Playlist -->
+      <div class="playlist"></div>
+    </div>
+    <script>
+      /**
+       * 1. Render songs -> OK
+       * 2. Scroll top -> OK
+       * 3. Play / pause / seek(tua) // bug in seek
+       * 4. CD rotate -> OK
+       * 5. Next / prev -> OK
+       * 6. Random -> OK
+       * 7. Next / Repeat when ended -> OK
+       * 8. Active song -> OK
+       * 9. Scroll active song into-view -> bug when song go to index 0 1 2
+       * 10. Play song when click -. OK
+       * 11. Save to localStorage
+       */
+
+      const $ = document.querySelector.bind(document);
+      const $$ = document.querySelectorAll.bind(document);
+
+      const PLAYER_STORAGE_KEY = "VTC_PLAYER";
+
+      const player = $(".player");
+      const cd = $(".cd");
+
+      const heading = $("header h2");
+      const cdThumb = $(".cd-thumb");
+      const audio = $("#audio");
+      const playlist = $(".playlist");
+
+      const playBtn = $(".btn-toggle-play");
+      const progress = $("#progress");
+
+      const prevBtn = $(".btn-prev");
+      const nextBtn = $(".btn-next");
+
+      const randomBtn = $(".btn-random");
+      const repeatBtn = $(".btn-repeat");
+
+      const app = {
+        currentIndex: 0, //vị trí bài hát hiện tại từ 0 -> n-1
+        isPlaying: false,
+        isRandom: false,
+        isRepeat: false,
+        config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
+        songs: [
+          {
+            name: "AL-Faatihah سورة الفاتحة",
+            singer: "أبو بكر الشاطري",
+            path: "https://ipfs.io/ipfs/QmdTJQ39ytAFHwXfKmpCRRSfCyPrL1qEHChkrQWJRftwsJ/Quran_Aboubakr_Alchatiri-001.mp3",
+            image: "https://www.yemenasda.net/file/2019/10/81qZcdIs-KL.png",
+          },
+          {
+            name: "AL-Baqarah سورة البقرة",
+            singer: "أبو بكر الشاطري",
+            path: "https://ipfs.io/ipfs/QmdTJQ39ytAFHwXfKmpCRRSfCyPrL1qEHChkrQWJRftwsJ/Quran_Aboubakr_Alchatiri-002.mp3",
+            image: "https://www.yemenasda.net/file/2019/10/81qZcdIs-KL.png",
+          },
+          {
+            name: "Aali-`Imraan سورة آل عمران",
+            singer: "أبو بكر الشاطري",
+            path: "./assets/music/YouBrokeMeFirst-TateMcRae.mp3",
+            image: "https://www.yemenasda.net/file/2019/10/81qZcdIs-KL.png",
+          },
+         
+         
+        ],
+        setConfig: function (key, value) {
+          this.config[key] = value;
+          localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(this.config));
+        },
+        render: function () {
+          const htmls = this.songs.map((song, index) => {
+            return `
+                                <div class="song ${
+                                  index === this.currentIndex ? "active" : ""
+                                }" data-index="${index}">
+                                    <div class="thumb" style="background-image: url('${
+                                      song.image
+                                    }');">
+                                    </div>
+                                    <div class="body">
+                                        <h3 class="title">${song.name}</h3>
+                                        <p class="author">${song.singer}</p>
+                                    </div>
+                                    <div class="option">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </div>
+                                </div>
+                            `;
+          });
+          playlist.innerHTML = htmls.join("");
+        },
+        defineProperties: function () {
+          Object.defineProperty(this, "currentSong", {
+            get: function () {
+              return this.songs[this.currentIndex];
+            },
+          });
+        },
+        handleEvents: function () {
+          const cdWidth = cd.offsetWidth; //kich thuoc chieu ngang hien tai la 200px
+
+          // Xử lý cd quay và dừng
+          const cdThumbAnimate = cdThumb.animate(
+            [{ transform: "rotate(360deg)" }],
+            {
+              //option the hien quay ntn
+              duration: 10000, //10second
+              iterations: Infinity, //iterations la loop bao nhieu lan
+            }
+          );
+          cdThumbAnimate.pause(); // chua play thi chua quay
+
+          // Xử lý phóng to / thu nhỏ cd
+          document.onscroll = function () {
+            const scrollTop =
+              window.scrollY || document.documentElement.scrollTop;
+            const newCdWidth = cdWidth - scrollTop;
+
+            cd.style.width = newCdWidth > 0 ? newCdWidth + 'px' : 0//neu cd chua thu het
+            //cd.style.width = newCdWidth + "px";
+            cd.style.opacity = newCdWidth / cdWidth;//opacity tu 0 -> 1 thi lay kich thuoc moi chia cho kich thuoc cu thi ra ti le
+          };
+          // Xử lý khi click play
+          playBtn.onclick = function () {
+            //ở đây chỉ play hoặc pause còn xử lý trạng thái ở dưới
+            if (app.isPlaying) {
+              audio.pause();
+            } else {
+              audio.play();
+            }
+          };
+
+          // Khi song được play
+          audio.onplay = function () {
+            app.isPlaying = true;
+            player.classList.add("playing");
+            cdThumbAnimate.play();
+          };
+
+          //Khi song bị pause
+          audio.onpause = function () {
+            app.isPlaying = false;
+            player.classList.remove("playing");
+            cdThumbAnimate.pause();
+          };
+
+          // Khi tiến độ bài hát thay đổi
+          audio.ontimeupdate = function () {
+            if (audio.duration) {
+              const progressPercent = Math.floor(
+                (audio.currentTime / audio.duration) * 100
+              );
+              progress.value = progressPercent;
+            }
+          };
+
+          // Xử lý khi tua song
+          progress.onchange = function (e) {
+            const seekTime = (audio.duration / 100) * e.target.value;
+            audio.currentTime = seekTime;
+          };
+
+          // Khi next song
+          nextBtn.onclick = function () {
+            if (app.isRandom) {
+              app.playRandomSong(); //khi thực hiện random ở trên xong thì gọi lại hàm này
+            } else {
+              app.nextSong();
+            }
+            audio.play();
+            app.render(); //khi sang bai nao thi active bai do
+            app.scrollToActiveSong();
+          };
+
+          // Khi previous song
+          prevBtn.onclick = function () {
+            if (app.isRandom) {
+              app.playRandomSong(); //khi thực hiện random ở trên xong thì gọi lại hàm này
+            } else {
+              app.prevSong();
+            }
+            audio.play();
+            app.render(); //khi sang bai nao thi active bai do
+          };
+
+          // Xử lý bật / tắt random song
+          randomBtn.onclick = function () {
+            app.isRandom = !app.isRandom;
+            app.setConfig("isRandom", app.isRandom);
+            randomBtn.classList.toggle("active", app.isRandom); // khi click thìhì icon sẽ đỏ lên
+            //đối số t2 của toggle là boolean nên nếu là true là add class ở đối số t1 vào và ngược lại
+          };
+
+          //Xử lý lặp lại 1 song
+          repeatBtn.onclick = function () {
+            app.isRepeat = !app.isRepeat; //đối nhau
+            app.setConfig("isRepeat", app.isRepeat);
+            repeatBtn.classList.toggle("active", app.isRepeat);
+          };
+
+          // Xử lý next song khi audio ended
+          audio.onended = function () {
+            if (app.isRepeat) {
+              audio.play();
+            } else {
+              nextBtn.click();
+            }
+          };
+
+          // Lắng nghe sự kiện click vào playlist
+          playlist.onclick = function (e) {
+            // e là event ta nhận được sau khi nhấn chuột xuống
+            //console.log(e.target)// target chính là mục tiêu nó sẽ trả về chính cái bạn target vào
+            const songNode = e.target.closest(".song:not(.active)");
+            if (songNode || e.target.closest(".option")) {
+              //closest sẽ trả 1 là chính nó 2 là thẻ cha của nó
+              // not active là css selector (bài nào đang play thì ko cần active nữa)
+              if (songNode) {
+                app.currentIndex = Number(songNode.dataset.index);
+                app.loadCurrentSong();
+                app.render();
+                audio.play();
+              }
+
+              // Xử lý khi click vào option ...
+            }
+          };
+        },
+
+        scrollToActiveSong: function () {
+          setTimeout(() => {
+            $(".song.active").scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
+          }, 500);
+        },
+
+        // getCurrentSong: function() {
+        //     return this.songs[this.song];
+        // },
+
+        // hàm này dùng để lấy ra dữ liệu bài hát
+        loadCurrentSong: function () {
+          heading.textContent = this.currentSong.name;
+          cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
+          audio.src = this.currentSong.path;
+        },
+
+        loadConfig: function () {
+          this.isRandom = this.config.isRandom;
+          this.isRepeat = this.config.isRepeat;
+        },
+
+        nextSong: function () {
+          this.currentIndex++;
+          if (this.currentIndex >= this.songs.length) {
+            this.currentIndex = 0;
+          }
+          this.loadCurrentSong(); //next la se tai thong tin moi
+        },
+
+        prevSong: function () {
+          this.currentIndex--;
+          if (this.currentIndex < 0) {
+            this.currentIndex = this.songs.length - 1;
+          }
+          this.loadCurrentSong(); //next la se tai thong tin moi
+        },
+
+        playRandomSong: function () {
+          // random thì phải trừ bài hiện tại
+          let newIndex;
+          do {
+            newIndex = Math.floor(Math.random() * this.songs.length);
+          } while (newIndex === this.currentIndex); // index mới khác index hiện tại khi click next ỏ prev
+          // trong while sẽ là điều kiện sai // nếu vẫn bằng cái cũ thì quay lại lặp
+
+          this.currentIndex = newIndex; //sau khi qua do while thì set lại bài hát mới
+          this.loadCurrentSong();
+        },
+        start: function () {
+          // Gán cấu hình từ config vào ứng dụng
+          this.loadConfig();
+
+          // Định nghĩa thuộc tính cho Object
+          this.defineProperties();
+
+          // Lắng nghe / Xử lý các sự kiện (DOM events)
+          this.handleEvents();
+
+          // Tải thông tin bài hát đầu tiên vào UI khi chạy ứng dụng
+          this.loadCurrentSong();
+
+          // Render playlist
+          this.render();
+
+          // hiển thị trạng thái ban đầu của btn repeat
+          randomBtn.classList.toggle("active", this.isRandom);
+          repeatBtn.classList.toggle("active", this.isRepeat);
+        },
+      };
+      app.start();
+    </script>
+  </body>
+</html>
