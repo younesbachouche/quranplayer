@@ -97,7 +97,7 @@
       const repeatBtn = $(".btn-repeat");
 
       const app = {
-        currentIndex: 0, //vị trí bài hát hiện tại từ 0 -> n-1
+        currentIndex: 0, //current song position from 0 -> n-1
         isPlaying: false,
         isRandom: false,
         isRepeat: false,
@@ -938,32 +938,32 @@
           });
         },
         handleEvents: function () {
-          const cdWidth = cd.offsetWidth; //kich thuoc chieu ngang hien tai la 200px
+          const cdWidth = cd.offsetWidth; //current horizontal dimension is 200px
 
-          // Xử lý cd quay và dừng
+          //
           const cdThumbAnimate = cdThumb.animate(
             [{ transform: "rotate(360deg)" }],
             {
-              //option the hien quay ntn
+              //option 
               duration: 10000, //10second
-              iterations: Infinity, //iterations la loop bao nhieu lan
+              iterations: Infinity, //
             }
           );
-          cdThumbAnimate.pause(); // chua play thi chua quay
+          cdThumbAnimate.pause(); // 
 
-          // Xử lý phóng to / thu nhỏ cd
+          // 
           document.onscroll = function () {
             const scrollTop =
               window.scrollY || document.documentElement.scrollTop;
             const newCdWidth = cdWidth - scrollTop;
 
-            cd.style.width = newCdWidth > 0 ? newCdWidth + 'px' : 0//neu cd chua thu het
+            cd.style.width = newCdWidth > 0 ? newCdWidth + 'px' : 0//if the cd hasn't tried it all yet
             //cd.style.width = newCdWidth + "px";
-            cd.style.opacity = newCdWidth / cdWidth;//opacity tu 0 -> 1 thi lay kich thuoc moi chia cho kich thuoc cu thi ra ti le
+            cd.style.opacity = newCdWidth / cdWidth;//opacity tu 0 -> 1 Then divide the new size by the old size to get the ratio
           };
-          // Xử lý khi click play
+          // 
           playBtn.onclick = function () {
-            //ở đây chỉ play hoặc pause còn xử lý trạng thái ở dưới
+            //here only play or pause also handle the state below
             if (app.isPlaying) {
               audio.pause();
             } else {
@@ -971,21 +971,21 @@
             }
           };
 
-          // Khi song được play
+          // 
           audio.onplay = function () {
             app.isPlaying = true;
             player.classList.add("playing");
             cdThumbAnimate.play();
           };
 
-          //Khi song bị pause
+          //
           audio.onpause = function () {
             app.isPlaying = false;
             player.classList.remove("playing");
             cdThumbAnimate.pause();
           };
 
-          // Khi tiến độ bài hát thay đổi
+          // 
           audio.ontimeupdate = function () {
             if (audio.duration) {
               const progressPercent = Math.floor(
@@ -995,13 +995,13 @@
             }
           };
 
-          // Xử lý khi tua song
+          // 
           progress.onchange = function (e) {
             const seekTime = (audio.duration / 100) * e.target.value;
             audio.currentTime = seekTime;
           };
 
-          // Khi next song
+          // 
           nextBtn.onclick = function () {
             if (app.isRandom) {
               app.playRandomSong(); //khi thực hiện random ở trên xong thì gọi lại hàm này
@@ -1024,22 +1024,22 @@
             app.render(); //khi sang bai nao thi active bai do
           };
 
-          // Xử lý bật / tắt random song
+          // Handling random song on/off
           randomBtn.onclick = function () {
             app.isRandom = !app.isRandom;
             app.setConfig("isRandom", app.isRandom);
-            randomBtn.classList.toggle("active", app.isRandom); // khi click thìhì icon sẽ đỏ lên
-            //đối số t2 của toggle là boolean nên nếu là true là add class ở đối số t1 vào và ngược lại
+            randomBtn.classList.toggle("active", app.isRandom); // When I click it, I will turn red
+            //Toggle's t2 argument is boolean, so if it is true, add the class in t1 argument and vice versa
           };
 
-          //Xử lý lặp lại 1 song
+          // song repeat processing
           repeatBtn.onclick = function () {
             app.isRepeat = !app.isRepeat; //đối nhau
             app.setConfig("isRepeat", app.isRepeat);
             repeatBtn.classList.toggle("active", app.isRepeat);
           };
 
-          // Xử lý next song khi audio ended
+          // Process next song when audio ended
           audio.onended = function () {
             if (app.isRepeat) {
               audio.play();
@@ -1048,14 +1048,14 @@
             }
           };
 
-          // Lắng nghe sự kiện click vào playlist
+          // Listen to playlist click event
           playlist.onclick = function (e) {
-            // e là event ta nhận được sau khi nhấn chuột xuống
-            //console.log(e.target)// target chính là mục tiêu nó sẽ trả về chính cái bạn target vào
+            // e is the event we get after clicking down
+            //console.log(e.target)// target is the target it will return what you target
             const songNode = e.target.closest(".song:not(.active)");
             if (songNode || e.target.closest(".option")) {
-              //closest sẽ trả 1 là chính nó 2 là thẻ cha của nó
-              // not active là css selector (bài nào đang play thì ko cần active nữa)
+              //closest will return 1 as itself 2 as its parent tag
+              // not active is the css selector (any song that is playing doesn't need to be active anymore)
               if (songNode) {
                 app.currentIndex = Number(songNode.dataset.index);
                 app.loadCurrentSong();
@@ -1063,7 +1063,7 @@
                 audio.play();
               }
 
-              // Xử lý khi click vào option ...
+              // Handling when clicking option...
             }
           };
         },
@@ -1081,7 +1081,7 @@
         //     return this.songs[this.song];
         // },
 
-        // hàm này dùng để lấy ra dữ liệu bài hát
+        // This function is used to get the song data
         loadCurrentSong: function () {
           heading.textContent = this.currentSong.name;
           cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
@@ -1098,7 +1098,7 @@
           if (this.currentIndex >= this.songs.length) {
             this.currentIndex = 0;
           }
-          this.loadCurrentSong(); //next la se tai thong tin moi
+          this.loadCurrentSong(); //
         },
 
         prevSong: function () {
@@ -1106,37 +1106,36 @@
           if (this.currentIndex < 0) {
             this.currentIndex = this.songs.length - 1;
           }
-          this.loadCurrentSong(); //next la se tai thong tin moi
+          this.loadCurrentSong(); //
         },
 
         playRandomSong: function () {
-          // random thì phải trừ bài hiện tại
+          // random 
           let newIndex;
           do {
             newIndex = Math.floor(Math.random() * this.songs.length);
-          } while (newIndex === this.currentIndex); // index mới khác index hiện tại khi click next ỏ prev
-          // trong while sẽ là điều kiện sai // nếu vẫn bằng cái cũ thì quay lại lặp
+          } while (newIndex === this.currentIndex); // index mother than the current index when clicking next or prev // in while will be false condition // if still equal to the old one, return to loop
 
-          this.currentIndex = newIndex; //sau khi qua do while thì set lại bài hát mới
+          this.currentIndex = newIndex; //After passing do while, set the new song again
           this.loadCurrentSong();
         },
         start: function () {
-          // Gán cấu hình từ config vào ứng dụng
+          // Assign configuration from config to application
           this.loadConfig();
 
-          // Định nghĩa thuộc tính cho Object
+          // Attribute definition for Object
           this.defineProperties();
 
-          // Lắng nghe / Xử lý các sự kiện (DOM events)
+          // Listen / Handle events (DOM events)
           this.handleEvents();
 
-          // Tải thông tin bài hát đầu tiên vào UI khi chạy ứng dụng
+          // Load the first song info into the UI when running the app
           this.loadCurrentSong();
 
           // Render playlist
           this.render();
 
-          // hiển thị trạng thái ban đầu của btn repeat
+          // show initial status of btn repeat
           randomBtn.classList.toggle("active", this.isRandom);
           repeatBtn.classList.toggle("active", this.isRepeat);
         },
