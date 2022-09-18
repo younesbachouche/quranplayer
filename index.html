@@ -1004,24 +1004,24 @@
           // 
           nextBtn.onclick = function () {
             if (app.isRandom) {
-              app.playRandomSong(); //khi thực hiện random ở trên xong thì gọi lại hàm này
+              app.playRandomSong(); //
             } else {
               app.nextSong();
             }
             audio.play();
-            app.render(); //khi sang bai nao thi active bai do
+            app.render(); //
             app.scrollToActiveSong();
           };
 
           // Khi previous song
           prevBtn.onclick = function () {
             if (app.isRandom) {
-              app.playRandomSong(); //khi thực hiện random ở trên xong thì gọi lại hàm này
+              app.playRandomSong(); //When the above random is done, call this function again
             } else {
               app.prevSong();
             }
             audio.play();
-            app.render(); //khi sang bai nao thi active bai do
+            app.render(); //
           };
 
           // Handling random song on/off
